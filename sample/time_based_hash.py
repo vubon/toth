@@ -4,10 +4,11 @@ import base64
 import struct
 import hashlib
 
+from django.conf import settings
+
 
 def get_hoth(secret, counter):
     """Return the HMAC-Based One-Time Password for the the given secret (base32 encoded) and the counter.
-    [755224, 287082, 359152, 969429, 338314, 254676, 287922, 162583, 399871, 520489]
     """
 
     secret = base64.b32decode(secret)
@@ -24,16 +25,12 @@ def get_toth(service_name: str) -> str:
     :param service_name:
     :return:
     """
+    just_pay_key = base64.b32encode((settings.SERVICE_KEY_ONE + settings.SECRET_KEY).encode())
+    top_up_service = base64.b32encode((settings.SERVICE_KEY_TWO + settings.SECRET_KEY).encode())
 
-    just_pay_key = base64.b32encode('JustPay0123456789'.encode())
-    top_up_service = base64.b32encode('TOPUP0123456789'.encode())
-
-    making_strong = b'132123sfdfjsdlfsdfn45412^^&%%%$$$'
-
-    secret_key = {"JustPay": just_pay_key, "TopUp": top_up_service}
+    secret_key = {"ServiceOne": just_pay_key, "ServiceTwo": top_up_service}
     secret = secret_key[service_name]
-    print(get_hoth(secret, int(time.time()) // 30))
 
     tot = get_hoth(secret, int(time.time()) // 30)
 
-    return hashlib.sha256('{}'.format(tot).encode() + making_strong).hexdigest()
+    return hashlib.sha256('{}'.format(tot).encode() + settings.SERVICE_SECRET_KEY.encode()).hexdigest()
